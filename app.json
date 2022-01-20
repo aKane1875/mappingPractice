@@ -1,0 +1,11 @@
+{
+  "expo": {
+    "name": "mapping",
+    "slug": "mapping",
+    "version": "1.0.0",
+    "assetBundlePatterns": [
+      "**/*"
+    ]
+  },
+  "name": "mapping"
+}
