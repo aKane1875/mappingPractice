@@ -1,29 +1,15 @@
-import React, { useEffect, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
-<<<<<<< HEAD
-import MapView, { PROVIDER_GOOGLE, Marker } from "react-native-maps";
+import React, { useEffect, useRef, useState } from "react";
+import { Button, StyleSheet, Text, View } from "react-native";
+import MapView, { PROVIDER_GOOGLE, Marker, Polygon } from "react-native-maps";
 import * as Location from "expo-location";
-const StyledMarker = () => (
-	<View
-		style={{
-			width: 60,
-			height: 60,
-			borderRadius: 30,
-			backgroundColor: "#ffc600",
-			display: "flex",
-			justifyContent: "center",
-			alignItems: "center",
-		}}
-	>
-		<Text style={{ color: "black" }}>Bhopal</Text>
-	</View>
-);
 
 export default function App() {
-	console.warn("CLIVE IS AWESOME");
+	// console.warn("CLIVE IS AWESOME");
 	const [currentLongitude, setCurrentLongitude] = useState(0);
 	const [currentLatitude, setCurrentLatitude] = useState(0);
-	const [location, setLocation] = useState(null);
+	const [markers, setMarkers] = useState([]);
+	const [polys, setPolys] = useState([]);
+	const mapRef = useRef();
 
 	useEffect(() => {
 		(async () => {
@@ -33,16 +19,60 @@ export default function App() {
 				return;
 			}
 
-			let loc = await Location.getCurrentPositionAsync({});
-			setLocation(loc);
+			let loc = await Location.getCurrentPositionAsync({
+				accuracy: Location.Accuracy.Balanced,
+				enableHighAccuracy: true,
+				timeInterval: 5,
+				distanceInterval: 0,
+			});
 			setCurrentLongitude(loc.coords.longitude);
 			setCurrentLatitude(loc.coords.latitude);
+			setMarkers[{}];
 		})();
 	}, []);
+
+	const myLoc = async () => {
+		mapRef.current.animateCamera({
+			center: { latitude: currentLatitude, longitude: currentLongitude },
+		});
+	};
+	const placeNode = () => {
+		const randScale = 0.003;
+		const mark = {
+			latitude: currentLatitude + Math.random() * randScale,
+			longitude: currentLongitude + Math.random() * randScale,
+		};
+
+		setMarkers((currMarkers) => [...currMarkers, mark]);
+	};
+	const nodes = [
+		{
+			latitude: 53.958626024974606,
+			longitude: -1.0759610737684961,
+		},
+		{
+			latitude: 53.96040004789593,
+			longitude: -1.076530158671897,
+		},
+		{
+			latitude: 53.959562378299985,
+			longitude: -1.0774774309120674,
+		},
+	];
+	const endRun = () => {
+		const polyMarks = [...markers];
+		const poly = {
+			coordinates: polyMarks,
+		};
+		console.warn(poly);
+		setPolys((currPolys) => [...currPolys, poly]);
+		setMarkers([]);
+	};
 
 	return (
 		<View style={StyleSheet.absoluteFillObject}>
 			<MapView
+				ref={mapRef}
 				style={{ flex: 1 }}
 				provider={PROVIDER_GOOGLE}
 				region={{
@@ -53,75 +83,25 @@ export default function App() {
 				}}
 				showUserLocation={true}
 			>
-				<Marker
-					coordinate={{
-						latitude: currentLatitude,
-						longitude: currentLongitude,
-					}}
-				>
-					<StyledMarker />
-				</Marker>
+				<></>
+				{markers.map((marker, index) => (
+					<Marker key={index} coordinate={marker} />
+				))}
+				{polys.map((poly, index) => (
+					<Polygon
+						key={index}
+						coordinates={poly.coordinates}
+						strokeColor="rgb(0, 0, 155)"
+						fillColor="rgba(0, 0, 155, 0.2)"
+						strokeWidth={5}
+					/>
+				))}
 			</MapView>
+			{markers.length > 2 ? <Button title="End Run" onPress={endRun} /> : null}
+			<Button title="Drop Node" onPress={placeNode} />
+			<Button title="Centre" onPress={myLoc} />
 		</View>
 	);
-=======
-
-import MapView, { PROVIDER_GOOGLE, Marker, Polygon } from "react-native-maps";
-
-export default function App() {
-  return (
-    <View style={StyleSheet.absoluteFillObject}>
-      <Text>SECTIONING</Text>
-      <MapView
-        style={{ flex: 1 }}
-        provider={PROVIDER_GOOGLE}
-        region={{
-          latitude: 53.801277,
-          longitude: -1.548567,
-          latitudeDelta: 0.009,
-          longitudeDelta: 0.009,
-        }}
-        showUserLocation={true}
-      >
-        <Polygon
-          coordinates={[
-            { latitude: 53.804277, longitude: -1.548567 },
-            { latitude: 53.809277, longitude: -1.548567 },
-            { latitude: 53.809277, longitude: -1.559067 },
-            { latitude: 53.804277, longitude: -1.558567 },
-          ]}
-          strokeColor="rgb(155, 0, 0)"
-          fillColor="rgba(155, 0, 0, 0.2)"
-          strokeWidth={5}
-        />
-        <Polygon
-          coordinates={[
-            { latitude: 53.804278, longitude: -1.548567 },
-            { latitude: 53.799277, longitude: -1.548567 },
-            { latitude: 53.799277, longitude: -1.559067 },
-            { latitude: 53.804278, longitude: -1.558567 },
-          ]}
-          strokeColor="rgb(0, 155, 0)"
-          fillColor="rgba(0, 155, 0, 0.2)"
-          strokeWidth={5}
-        />
-        <Polygon
-          coordinates={[
-            { latitude: 53.804278, longitude: -1.538567 },
-            { latitude: 53.799277, longitude: -1.538567 },
-            { latitude: 53.799277, longitude: -1.549067 },
-            { latitude: 53.804278, longitude: -1.549001 },
-          ]}
-          strokeColor="rgb(0, 0, 155)"
-          fillColor="rgba(0, 0, 155, 0.2)"
-          strokeWidth={5}
-        />
-
-        <Marker coordinate={{ latitude: 53.801277, longitude: -1.548567 }} />
-      </MapView>
-    </View>
-  );
->>>>>>> fdf1da83e250bb1cf29be13d8fad2272f4deb60f
 }
 
 const styles = StyleSheet.create({
