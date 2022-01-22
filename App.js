@@ -1,6 +1,6 @@
 import { StatusBar } from "expo-status-bar";
 
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View, Button } from "react-native";
 import * as Location from "expo-location";
 import MapView, { Marker, Polygon } from "react-native-maps";
 import { useState, useEffect } from "react";
@@ -24,7 +24,7 @@ export default function App() {
       setCurrentLongitude(location.coords.longitude);
       setCurrentLatitude(location.coords.latitude);
     })();
-  }, []);
+  }, [location]);
 
   let text = "Waiting..";
   if (errorMsg) {
@@ -39,10 +39,11 @@ export default function App() {
       <MapView
         style={{ flex: 1 }}
         region={{
-          latitude: 53.801277,
-          longitude: -1.548567,
+          latitude: currentLatitude,
+          longitude: currentLongitude,
           latitudeDelta: 0.009,
           longitudeDelta: 0.009,
+          location,
         }}
         showUserLocation={true}
       >
@@ -79,9 +80,23 @@ export default function App() {
           fillColor="rgba(0, 0, 155, 0.2)"
           strokeWidth={5}
         />
-        {/* <Text>{text}</Text> */}
-        <Marker coordinate={{ latitude: 53.801277, longitude: -1.548567 }} />
+
+        <Marker
+          coordinate={{
+            latitude: currentLatitude,
+            longitude: currentLongitude,
+          }}
+        />
       </MapView>
+      <Button
+        title="Drop Node"
+        onPress={() => {
+          // location = await Location.getCurrentPositionAsync({});
+          // setLocation(location);
+          // setCurrentLongitude(location.coords.longitude);
+          // setCurrentLatitude(location.coords.latitude);
+        }}
+      />
     </View>
   );
 }
