@@ -62,7 +62,7 @@ export default function Map() {
 		});
 		setCurrentLongitude(loc.coords.longitude);
 		setCurrentLatitude(loc.coords.latitude);
-		createZone(loc.coords.latitude, loc.coords.longitude);
+		setZone(createZone(loc.coords.latitude, loc.coords.longitude));
 	};
 
 	const panToUser = async () => {
@@ -104,7 +104,7 @@ export default function Map() {
 					latitudeDelta: 0.009,
 					longitudeDelta: 0.009,
 				}}
-				showUserLocation={true}
+				showsUserLocation={true}
 				showsMyLocationButton={true}
 				followsUserLocation={true}
 			>
