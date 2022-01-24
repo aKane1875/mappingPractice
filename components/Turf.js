@@ -19,7 +19,7 @@ const alcatraz = {
 
 export default function Turf(props) {
 	return (
-		<MapView>
+		<MapView style={{ flex: 1 }}>
 			<Geojson geojson={alcatraz} />
 		</MapView>
 	);
