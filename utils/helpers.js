@@ -17,7 +17,7 @@ export const updateTrackerArray = async (newValue) => {
 		jsonValue = JSON.stringify(newArray);
 		await AsyncStorage.setItem("trackerArray", jsonValue);
 	} catch (e) {
-		console.log("update tracker array error", e);
+		// console.log("update tracker array error", e);
 	}
 };
 
@@ -69,7 +69,7 @@ export const createBoard = (_lon, _lat) => {
 	// 	});
 	// });
 
-	return grid;
+	return board;
 };
 
 export const MapviewArrayToTurfArray = (arr) => {

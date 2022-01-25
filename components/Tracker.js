@@ -13,8 +13,8 @@ function Tracker() {
 	const startLocationTracking = async () => {
 		await Location.startLocationUpdatesAsync(LOCATION_TRACKING, {
 			accuracy: Location.Accuracy.Highest,
-			timeInterval: 3000,
-			distanceInterval: 0,
+			timeInterval: 10000,
+			distanceInterval: 10,
 			// foregroundService: {
 			//     notificationTitle: "Using your location",
 			//     notificationBody:
@@ -71,7 +71,7 @@ function Tracker() {
 
 TaskManager.defineTask(LOCATION_TRACKING, async ({ data, error }) => {
 	if (error) {
-		console.log("LOCATION_TRACKING task ERROR:", error);
+		// console.log("LOCATION_TRACKING task ERROR:", error);
 		return;
 	}
 	if (data) {

@@ -4,7 +4,7 @@ import MapView, { PROVIDER_GOOGLE, Polygon, Polyline } from "react-native-maps";
 import * as Location from "expo-location";
 import Tracker from "./Tracker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { createBoard } from "../utils/helpers";
+import { checkPathIsInPolys, createBoard } from "../utils/helpers";
 
 export default function Map() {
 	const leeds_lat = 53.7999506;
@@ -26,7 +26,6 @@ export default function Map() {
 		const { status } = await Location.requestForegroundPermissionsAsync();
 		if (status !== "granted") {
 			console.log("Permission to access location was denied");
-			setErrorMsg("Permission to access location was denied");
 			return;
 		} else {
 			console.log("Permission to access location granted");
@@ -60,6 +59,10 @@ export default function Map() {
 		});
 	};
 
+	const submitTrack = () => {
+		checkPathIsInPolys(track, hexBoard);
+	};
+
 	const getStoredTrackerData = async () => {
 		try {
 			let jsonValue = await AsyncStorage.getItem("trackerArray");
@@ -68,7 +71,7 @@ export default function Map() {
 			jsonValue = JSON.stringify([]);
 			await AsyncStorage.setItem("trackerArray", jsonValue);
 		} catch (e) {
-			console.log("error in get stored tracker data", e);
+			// console.log("error in get stored tracker data", e);
 		}
 	};
 
@@ -112,6 +115,7 @@ export default function Map() {
 			<Text>
 				Path Points: {track.length} Hex Count: {hexBoard.length}
 			</Text>
+			<Button title="SUBMIT TRACK" onPress={submitTrack} />
 			<Button title="UPDATE TRACK" onPress={getStoredTrackerData} />
 			<Tracker />
 		</View>
