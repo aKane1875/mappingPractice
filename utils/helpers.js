@@ -1,35 +1,12 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import hexGrid from "@turf/hex-grid";
+import pointsWithinPolygon from "@turf/points-within-polygon";
+// import isPointInPolygon from "geolib/es/getDistance";
 
 export const roundGPS = (num, places) => {
 	let pow = Math.pow(10, places);
 	const flooredNum = Math.ceil(num * pow) / pow;
 	return flooredNum;
-};
-
-export const createZone = (_lat, _lon) => {
-	const lat = roundGPS(_lat, 3);
-	const lon = roundGPS(_lon, 3);
-	const size = 0.001;
-	const newZone = [
-		{
-			latitude: lat,
-			longitude: lon,
-		},
-		{
-			latitude: lat - size,
-			longitude: lon,
-		},
-		{
-			latitude: lat - size,
-			longitude: lon - size,
-		},
-		{
-			latitude: lat,
-			longitude: lon - size,
-		},
-	];
-	return newZone;
 };
 
 export const updateTrackerArray = async (newValue) => {
@@ -45,35 +22,61 @@ export const updateTrackerArray = async (newValue) => {
 	}
 };
 
-export const createBoard = (_lat, _lon) => {
+//converts polyArray to objects with long and lat, for MapView to use
+export const createBoard = (_lon, _lat) => {
 	const board_size = 0.02;
+	const board_h = 0.04;
 	const bbox = [
-		_lon - board_size,
+		_lon - board_h,
 		_lat - board_size,
-		_lon + board_size,
+		_lon + board_h,
 		_lat + board_size,
 	];
 
 	var cellSide = 0.1;
-	var options = { units: "miles" };
+	var options = { units: "kilometres" };
 
 	var grid = hexGrid(bbox, cellSide, options);
 
 	//leaves an array of arrays
-	const polyArrays = grid.features.map(
-		(feature) => feature.geometry.coordinates[0]
-	);
+	const board = grid.features.map((feature) => feature.geometry.coordinates[0]);
 
 	//convert arrays to objects
-	polyArrays.forEach((poly) => {
+	board.forEach((poly) => {
 		poly.forEach((coord, index) => {
 			poly[index] = {
 				longitude: coord[0],
 				latitude: coord[1],
-				col: "rgba(156, 194, 255, 0.3)",
 			};
+			// console.log("poly[index]", poly[index]);
 		});
 	});
 
-	return polyArrays;
+	return board;
+};
+
+export const MapviewArrayToTurfArray = (arr) => {
+	return arr.map((point) => [point.longitude, point.latitude]);
+};
+
+export const checkPathIsInPolys = (pointsArray, hexArray) => {
+	//CHANGE MAPVIEW POINT ARRAY TO TURF POINT ARRAY - ACTUALLY HOW ARE WE COLLECTING THEM?
+	const turfPoints = MapviewArrayToTurfArray(pointsArray);
+
+	//DEEP COPY THE HEX ARRAY AS WILL UPDATE IT
+	const hexArrayCopy = JSON.parse(JSON.stringify(hexArray));
+
+	//LOOP THROUGH HEXES
+	hexArrayCopy.forEach((hex) => {
+		//CONVERT HEX TO TURFSTYLE
+		const turfHex = MapviewArrayToTurfArray(hex);
+		//SEE IF ANY OF POINTS ARE INSIDE THE HEX
+		const pointsToCheck = pointsWithinPolygon(turfPoints, turfHex);
+
+		//IF ANY POINTS ARE IN THE HEX, CHANGE ITS COLOUR
+		if (pointsToCheck.features.length > 0) {
+			hex.col = "rgba(236, 66, 245, 0.3)";
+		}
+	});
+	setHexBoard(hexArrayCopy);
 };

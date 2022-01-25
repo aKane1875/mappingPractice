@@ -1,29 +1,29 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Button, StyleSheet, Text, View } from "react-native";
-import MapView, {
-	PROVIDER_GOOGLE,
-	Marker,
-	Polygon,
-	Polyline,
-} from "react-native-maps";
+import MapView, { PROVIDER_GOOGLE, Polygon, Polyline } from "react-native-maps";
 import * as Location from "expo-location";
 import Tracker from "./Tracker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { createBoard } from "../utils/helpers";
 
 export default function Map() {
-	const [currentLongitude, setCurrentLongitude] = useState(0);
-	const [currentLatitude, setCurrentLatitude] = useState(0);
-	const [markers, setMarkers] = useState([]);
+	const leeds_lat = 53.7999506;
+	const leeds_long = -1.5497128;
+	const [userLoc, setUserLoc] = useState({
+		latitude: leeds_lat,
+		longitude: leeds_long,
+	});
 	const [track, setTrack] = useState([]);
+	const [hexBoard, setHexBoard] = useState(createBoard(leeds_long, leeds_lat));
 	const mapRef = useRef(null);
 
 	useEffect(() => {
-		findUser();
+		// findUser();
 		AsyncStorage.setItem("trackerArray", JSON.stringify([]));
 	}, []);
 
 	const findUser = async () => {
-		let { status } = await Location.requestForegroundPermissionsAsync();
+		const { status } = await Location.requestForegroundPermissionsAsync();
 		if (status !== "granted") {
 			console.log("Permission to access location was denied");
 			setErrorMsg("Permission to access location was denied");
@@ -32,30 +32,33 @@ export default function Map() {
 			console.log("Permission to access location granted");
 		}
 
-		let loc = await Location.getCurrentPositionAsync({
+		const loc = await Location.getCurrentPositionAsync({
 			accuracy: Location.Accuracy.Balanced,
 			enableHighAccuracy: true,
 			timeInterval: 5000,
 			distanceInterval: 0,
 		});
-		setCurrentLongitude(loc.coords.longitude);
-		setCurrentLatitude(loc.coords.latitude);
+
+		setUserLoc({
+			latitude: loc.coords.latitude,
+			longitude: loc.coords.longitude,
+		});
+	};
+
+	const tappedPoly = (index) => {
+		const newBoard = JSON.parse(JSON.stringify(hexBoard));
+		const tapped = newBoard[index];
+		tapped.col = "rgba(42, 181, 0, 0.5)"; //pale green
+		newBoard[index] = tapped;
+		setHexBoard(newBoard);
+		console.log(`tapped.col ${tapped.col} `);
 	};
 
 	const panToUser = async () => {
 		findUser();
 		mapRef.current.animateCamera({
-			center: { latitude: currentLatitude, longitude: currentLongitude },
+			center: userLoc,
 		});
-	};
-
-	//can probs delete
-	const placeNode = () => {
-		const mark = {
-			latitude: currentLatitude,
-			longitude: currentLongitude,
-		};
-		setMarkers((currMarkers) => [...currMarkers, mark]);
 	};
 
 	const getStoredTrackerData = async () => {
@@ -79,8 +82,8 @@ export default function Map() {
 				style={{ flex: 1 }}
 				provider={PROVIDER_GOOGLE}
 				region={{
-					latitude: currentLatitude,
-					longitude: currentLongitude,
+					latitude: userLoc.latitude,
+					longitude: userLoc.longitude,
 					latitudeDelta: 0.009,
 					longitudeDelta: 0.009,
 				}}
@@ -88,24 +91,18 @@ export default function Map() {
 				showsMyLocationButton={true}
 				followsUserLocation={true}
 			>
-				<Marker
-					coordinate={{
-						latitude: currentLatitude,
-						longitude: currentLongitude,
-					}}
-				/>
-				{markers.map((marker, index) => (
-					<Marker key={index} coordinate={marker} />
-				))}
-
-				{markers.length > 1 ? (
-					<Polyline
-						coordinates={markers}
-						strokeColor="rgb(0, 0, 155)"
-						fillColor="rgba(0, 0, 155, 0.2)"
-						strokeWidth={5}
+				{hexBoard.map((poly, index) => (
+					<Polygon
+						key={index}
+						coordinates={poly}
+						strokeColor="rgba(0,0,0,0.1)"
+						fillColor={poly.col}
+						// fillColor="rgba(156, 194, 255, 0.3)"
+						strokeWidth={1}
+						tappable
+						onPress={() => tappedPoly(index)}
 					/>
-				) : null}
+				))}
 				{track.length > 1 ? (
 					<Polyline
 						coordinates={track}
@@ -115,10 +112,10 @@ export default function Map() {
 					/>
 				) : null}
 			</MapView>
-			<Text>{track.length}</Text>
+			<Text>
+				Path Points: {track.length} Hex Count: {hexBoard.length}
+			</Text>
 			<Button title="UPDATE TRACK" onPress={getStoredTrackerData} />
-			<Button title="CENTER" onPress={panToUser} />
-			<Button title="PLACE NODE" onPress={placeNode} />
 			<Tracker />
 		</View>
 	);
