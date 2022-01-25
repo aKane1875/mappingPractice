@@ -53,6 +53,7 @@ function Tracker() {
 		TaskManager.isTaskRegisteredAsync(LOCATION_TRACKING).then((tracking) => {
 			if (tracking) {
 				Location.stopLocationUpdatesAsync(LOCATION_TRACKING);
+				console.log("tracking Stopped");
 			}
 		});
 	};
@@ -79,7 +80,7 @@ TaskManager.defineTask(LOCATION_TRACKING, async ({ data, error }) => {
 			latitude: locations[0].coords.latitude,
 			longitude: locations[0].coords.longitude,
 		};
-		console.log("Tracker found new point", newPoint);
+		// console.log("Tracker found new point", newPoint);
 		updateTrackerArray(newPoint);
 	}
 });

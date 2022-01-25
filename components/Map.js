@@ -51,7 +51,6 @@ export default function Map() {
 		tapped.col = "rgba(42, 181, 0, 0.5)"; //pale green
 		newBoard[index] = tapped;
 		setHexBoard(newBoard);
-		console.log(`tapped.col ${tapped.col} `);
 	};
 
 	const panToUser = async () => {
@@ -65,13 +64,11 @@ export default function Map() {
 		try {
 			let jsonValue = await AsyncStorage.getItem("trackerArray");
 			const parsedArray = jsonValue != null ? JSON.parse(jsonValue) : null;
-			console.log("getStoredData says old array: ", parsedArray);
 			setTrack((currTrack) => [...currTrack, ...parsedArray]);
 			jsonValue = JSON.stringify([]);
 			await AsyncStorage.setItem("trackerArray", jsonValue);
-			console.log("getStoredData says track: ", track);
 		} catch (e) {
-			console.log(e);
+			console.log("error in get stored tracker data", e);
 		}
 	};
 
@@ -94,7 +91,7 @@ export default function Map() {
 				{hexBoard.map((poly, index) => (
 					<Polygon
 						key={index}
-						coordinates={poly}
+						coordinates={poly.coords}
 						strokeColor="rgba(0,0,0,0.1)"
 						fillColor={poly.col}
 						// fillColor="rgba(156, 194, 255, 0.3)"

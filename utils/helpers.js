@@ -13,12 +13,11 @@ export const updateTrackerArray = async (newValue) => {
 	try {
 		let jsonValue = await AsyncStorage.getItem("trackerArray");
 		const parsedArray = jsonValue != null ? JSON.parse(jsonValue) : null;
-		console.log("upTrAr says:", parsedArray);
 		const newArray = [...parsedArray, newValue];
 		jsonValue = JSON.stringify(newArray);
 		await AsyncStorage.setItem("trackerArray", jsonValue);
 	} catch (e) {
-		console.log(e);
+		console.log("update tracker array error", e);
 	}
 };
 
@@ -33,26 +32,44 @@ export const createBoard = (_lon, _lat) => {
 		_lat + board_size,
 	];
 
-	var cellSide = 0.1;
-	var options = { units: "kilometres" };
+	const cellSide = 0.1;
+	const options = { units: "kilometres" };
 
-	var grid = hexGrid(bbox, cellSide, options);
+	const grid = hexGrid(bbox, cellSide, options);
 
 	//leaves an array of arrays
 	const board = grid.features.map((feature) => feature.geometry.coordinates[0]);
 
 	//convert arrays to objects
-	board.forEach((poly) => {
-		poly.forEach((coord, index) => {
-			poly[index] = {
-				longitude: coord[0],
-				latitude: coord[1],
+	board.forEach((poly, index) => {
+		const _coords = poly.map((coordArr) => {
+			return {
+				longitude: coordArr[0],
+				latitude: coordArr[1],
 			};
-			// console.log("poly[index]", poly[index]);
 		});
+
+		board[index] = {
+			col: "rgba(3, 90, 252, 0.4)",
+			coords: _coords,
+		};
 	});
 
-	return board;
+	// //convert arrays to objects
+	// board.forEach((poly) => {
+
+	// 	poly.forEach((coord, index) => {
+	// 		poly[index] = {
+	// 			col: "rgba(3, 90, 252, 0.4)",
+	// 			coords: {
+	// 				longitude: coord[0],
+	// 				latitude: coord[1],
+	// 			},
+	// 		};
+	// 	});
+	// });
+
+	return grid;
 };
 
 export const MapviewArrayToTurfArray = (arr) => {
