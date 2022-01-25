@@ -7,41 +7,19 @@ import MapView, {
 	Polyline,
 } from "react-native-maps";
 import * as Location from "expo-location";
-import * as TaskManager from "expo-task-manager";
-import { createZone, roundGPS } from "../utils/helpers";
-
-const LOCATION_TRACKING = "location-tracking";
-
-let trackVar = [];
+import Tracker from "./Tracker";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Map() {
 	const [currentLongitude, setCurrentLongitude] = useState(0);
 	const [currentLatitude, setCurrentLatitude] = useState(0);
 	const [markers, setMarkers] = useState([]);
-	const [polys, setPolys] = useState([]);
-	const [zone, setZone] = useState([]);
 	const [track, setTrack] = useState([]);
 	const mapRef = useRef(null);
 
-	const startLocationTracking = async () => {
-		const { status } = await Location.requestBackgroundPermissionsAsync();
-
-		if (status === "granted") {
-			await Location.startLocationUpdatesAsync(LOCATION_TRACKING, {
-				accuracy: Location.Accuracy.Highest,
-				timeInterval: 5000, //adjust both of these
-				distanceInterval: 2,
-				foregroundService: {
-					notificationTitle: "Using your location",
-					notificationBody:
-						"To turn off, go back to the app and switch something off.",
-				},
-			});
-		}
-	};
-
 	useEffect(() => {
 		findUser();
+		AsyncStorage.setItem("trackerArray", JSON.stringify([]));
 	}, []);
 
 	const findUser = async () => {
@@ -62,7 +40,6 @@ export default function Map() {
 		});
 		setCurrentLongitude(loc.coords.longitude);
 		setCurrentLatitude(loc.coords.latitude);
-		setZone(createZone(loc.coords.latitude, loc.coords.longitude));
 	};
 
 	const panToUser = async () => {
@@ -72,24 +49,27 @@ export default function Map() {
 		});
 	};
 
+	//can probs delete
 	const placeNode = () => {
-		const randScale = 0.003;
 		const mark = {
-			latitude: currentLatitude + Math.random() * randScale,
-			longitude: currentLongitude + Math.random() * randScale,
+			latitude: currentLatitude,
+			longitude: currentLongitude,
 		};
-
 		setMarkers((currMarkers) => [...currMarkers, mark]);
 	};
 
-	const endRun = () => {
-		const polyMarks = [...markers];
-		const poly = {
-			coordinates: polyMarks,
-		};
-		setPolys((currPolys) => [...currPolys, poly]);
-		setMarkers([]);
-		Location.stopLocationUpdatesAsync(LOCATION_TRACKING); //need to be async?
+	const getStoredTrackerData = async () => {
+		try {
+			let jsonValue = await AsyncStorage.getItem("trackerArray");
+			const parsedArray = jsonValue != null ? JSON.parse(jsonValue) : null;
+			console.log("getStoredData says old array: ", parsedArray);
+			setTrack((currTrack) => [...currTrack, ...parsedArray]);
+			jsonValue = JSON.stringify([]);
+			await AsyncStorage.setItem("trackerArray", jsonValue);
+			console.log("getStoredData says track: ", track);
+		} catch (e) {
+			console.log(e);
+		}
 	};
 
 	return (
@@ -114,25 +94,10 @@ export default function Map() {
 						longitude: currentLongitude,
 					}}
 				/>
-				<Marker
-					coordinate={{
-						latitude: roundGPS(currentLatitude, 3),
-						longitude: roundGPS(currentLongitude, 3),
-					}}
-				/>
 				{markers.map((marker, index) => (
 					<Marker key={index} coordinate={marker} />
 				))}
 
-				{polys.map((poly, index) => (
-					<Polygon
-						key={index}
-						coordinates={poly.coordinates}
-						strokeColor="rgb(0, 0, 155)"
-						fillColor="rgba(0, 0, 155, 0.1)"
-						strokeWidth={5}
-					/>
-				))}
 				{markers.length > 1 ? (
 					<Polyline
 						coordinates={markers}
@@ -149,19 +114,12 @@ export default function Map() {
 						strokeWidth={3}
 					/>
 				) : null}
-				{zone.length > 1 ? (
-					<Polygon
-						coordinates={zone}
-						strokeColor="rgb(0, 0, 155)"
-						fillColor="rgba(0, 0, 155, 0.2)"
-						strokeWidth={5}
-					/>
-				) : null}
 			</MapView>
-			{markers.length > 2 ? <Button title="End Run" onPress={endRun} /> : null}
-			<Button title="Drop Node" onPress={placeNode} />
-			<Button title="Centre" onPress={panToUser} />
-			<Button title="Start Tracking" onPress={startLocationTracking} />
+			<Text>{track.length}</Text>
+			<Button title="UPDATE TRACK" onPress={getStoredTrackerData} />
+			<Button title="CENTER" onPress={panToUser} />
+			<Button title="PLACE NODE" onPress={placeNode} />
+			<Tracker />
 		</View>
 	);
 }
@@ -173,21 +131,4 @@ const styles = StyleSheet.create({
 		alignItems: "center",
 		justifyContent: "center",
 	},
-});
-
-TaskManager.defineTask(LOCATION_TRACKING, async ({ data, error }) => {
-	if (error) {
-		console.log("an error with the taskmanager thing", error);
-		return;
-	}
-	if (data) {
-		const { locations } = data;
-		const newTrack = {
-			latitude: locations[0].coords.latitude,
-			longitude: locations[0].coords.longitude,
-		};
-
-		trackVar = [...trackVar, newTrack];
-		console.log(trackVar);
-	}
 });
