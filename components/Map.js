@@ -4,11 +4,14 @@ import MapView, { PROVIDER_GOOGLE, Polygon, Polyline } from "react-native-maps";
 import * as Location from "expo-location";
 import Tracker from "./Tracker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { checkPathIsInPolys, createBoard } from "../utils/helpers";
+import { createBoard } from "../utils/helpers";
 
 export default function Map() {
-	const leeds_lat = 53.7999506;
-	const leeds_long = -1.5497128;
+	// const leeds_lat = 53.7999506;
+	// const leeds_long = -1.5497128;
+	const leeds_lat = 53.958647;
+	const leeds_long = -1.079077;
+
 	const [userLoc, setUserLoc] = useState({
 		latitude: leeds_lat,
 		longitude: leeds_long,
@@ -44,8 +47,16 @@ export default function Map() {
 		});
 	};
 
+	// const tappedPoly = (index) => {
+	// 	const newBoard = JSON.parse(JSON.stringify(hexBoard));
+	// 	const tapped = newBoard[index];
+	// 	tapped.col = "rgba(42, 181, 0, 0.5)"; //pale green
+	// 	newBoard[index] = tapped;
+	// 	setHexBoard(newBoard);
+	// };
+
 	const tappedPoly = (index) => {
-		const newBoard = JSON.parse(JSON.stringify(hexBoard));
+		const newBoard = [...hexBoard];
 		const tapped = newBoard[index];
 		tapped.col = "rgba(42, 181, 0, 0.5)"; //pale green
 		newBoard[index] = tapped;
@@ -59,29 +70,13 @@ export default function Map() {
 		});
 	};
 
-	const submitTrack = () => {
-		checkPathIsInPolys(track, hexBoard);
-	};
-
-	const getStoredTrackerData = async () => {
-		try {
-			let jsonValue = await AsyncStorage.getItem("trackerArray");
-			const parsedArray = jsonValue != null ? JSON.parse(jsonValue) : null;
-			setTrack((currTrack) => [...currTrack, ...parsedArray]);
-			jsonValue = JSON.stringify([]);
-			await AsyncStorage.setItem("trackerArray", jsonValue);
-		} catch (e) {
-			// console.log("error in get stored tracker data", e);
-		}
-	};
-
 	return (
 		<View style={StyleSheet.absoluteFillObject}>
 			<MapView
 				ref={mapRef}
 				style={{ flex: 1 }}
 				provider={PROVIDER_GOOGLE}
-				region={{
+				initialRegion={{
 					latitude: userLoc.latitude,
 					longitude: userLoc.longitude,
 					latitudeDelta: 0.009,
@@ -97,7 +92,6 @@ export default function Map() {
 						coordinates={poly.coords}
 						strokeColor="rgba(0,0,0,0.1)"
 						fillColor={poly.col}
-						// fillColor="rgba(156, 194, 255, 0.3)"
 						strokeWidth={1}
 						tappable
 						onPress={() => tappedPoly(index)}
@@ -113,11 +107,14 @@ export default function Map() {
 				) : null}
 			</MapView>
 			<Text>
-				Path Points: {track.length} Hex Count: {hexBoard.length}
+				Path Points: {track.length} hex count: {hexBoard.length}{" "}
 			</Text>
-			<Button title="SUBMIT TRACK" onPress={submitTrack} />
-			<Button title="UPDATE TRACK" onPress={getStoredTrackerData} />
-			<Tracker />
+			<Tracker
+				setTrack={setTrack}
+				track={track}
+				hexBoard={hexBoard}
+				setHexBoard={setHexBoard}
+			/>
 		</View>
 	);
 }
